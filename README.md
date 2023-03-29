@@ -1,19 +1,19 @@
 # NTHU Labook: backend - scraper
 
 ## usage
-0. Install the packages
+### 0. Install the packages
 ```
 npm install
 ```
 **WARNING**: I think installing and configing Browers Driver is difficult. Sorry for not providing install details of it.
 PLease follow [puppeteer](https://pptr.dev/#getting-started)'s guide to make sure the [example](https://pptr.dev/#example) is work.
 
-1. Build database first:
+### 1. Build database first:
 ```
 sqlite3 db/graduate.db
 ```
 
-2. Define tables: (with schema below)
+### 2. Define tables: (with schema below)
 ```
 CREATE TABLE professors(
 	professor_id INTEGER PRIMARY KEY,
@@ -70,12 +70,12 @@ sqlite> .schema
 sqlite> .exit
 ```
 
-3. insert professors (by reading `NTHUdepartment.yml`)
+### 3. insert professors (by reading `NTHUdepartment.yml`)
 ```
 node db/insert_professors.js 
 ```
 
-4. scrape the professors (with loggging result to a file)
+### 4. scrape the professors (with loggging result to a file)
 Before run the script, make sure you have set the right Id(s) to scrape, e.g. 
 (1) Select ALL Ids to scrape: `let slice_profs = professors.slice(0, professors.length);`
 (2) Select some Ids (19, 21, 24, 203~242) to scrape: `selectedIds = [19, 21, 24, ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203)]`
@@ -93,6 +93,9 @@ After all settings, you can run the script to scrape with logging results to a f
 node scrape.js | tee log.txt
 ```
 
-5. After scraping, run `node db/update_list.js` to update the professors list becaute we only show the professors with non-zero papers in the website.
+### 5. After scraping, run `node db/update_list.js` to update the professors list becaute we only show the professors with non-zero papers in the website.
 
-6. Copy and paste `db/graduate.db` and `list.yml` to the `./db/` folder of the website.
+### 6. Copy and paste `db/graduate.db` and `db/list.yml` to the `./db/` folder of the website.
+
+## Contact
+Any misleading or confusion about the code, welcome to send Email to [nthu.labook@gmail.com](nthu.labook@gmail.com)
