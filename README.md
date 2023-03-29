@@ -5,8 +5,8 @@
 ```
 npm install
 ```
-**WARNING**: I think installing and configing Browers Driver is difficult. Sorry for not providing install details of it.
-PLease follow [puppeteer](https://pptr.dev/#getting-started)'s guide to make sure the [example](https://pptr.dev/#example) is work.
+**WARNING**: Since installing and configuring Drivers for browser  would be complicated and difficult, I'm sorry for not providing install details of it.
+Please follow [puppeteer](https://pptr.dev/#getting-started)'s guide to make sure the [example](https://pptr.dev/#example) is runnable.
 
 ### 1. Build database first:
 ```
