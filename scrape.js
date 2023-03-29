@@ -79,7 +79,6 @@ async function scrape(professor, num_paper, browser) {
     throw new Error('Can not find the professsor in DB.');
   }
   
-  // console.log(await browser.version());
   const page = await browser.newPage();
 
   // goto 清大博碩士論文
@@ -101,7 +100,6 @@ async function scrape(professor, num_paper, browser) {
   await page.waitForSelector('#bodyid > form > div > table > tbody > tr:nth-child(1) > td.etds_mainct > table > tbody > tr:nth-child(4) > td > div.cont_l2 > table > tbody > tr:nth-child(2) > td > table.brwrestable > tbody > tr:nth-child(2) > td:nth-child(2) > span:nth-child(2)', { timeout: 60000 });
   let result_num = await page.$eval('#bodyid > form > div > table > tbody > tr:nth-child(1) > td.etds_mainct > table > tbody > tr:nth-child(4) > td > div.cont_l2 > table > tbody > tr:nth-child(2) > td > table.brwrestable > tbody > tr:nth-child(2) > td:nth-child(2) > span:nth-child(2)', el => el.textContent);
   if(parseInt(result_num) == 0){
-    // await browser.close();
     throw professor +' not found in 清大博碩士論文網.';
   }
   if(num_paper == -1) num_paper = parseInt(result_num);
@@ -168,9 +166,6 @@ async function scrape(professor, num_paper, browser) {
       console.log("畢業學年度 not found: ", name, professor, i);
       graduate_year = 'not found';
     }
-
-    // console.log(results);
-    // break;
 
     // db已有資料: 檢查是否有共同指導教授的情況
     let query = db.prepare('SELECT * FROM students WHERE title_c  = ?').get(title_c);
@@ -358,23 +353,12 @@ async function scrape_all_professors(professors){
   for (const p of professors){
     console.log("-----------------------------------------------");
     console.log("now scrape:", p.name, "(", p.professor_id, ")");
-    // const browser = await puppeteer.launch();
     const browser = await puppeteer.launch({headless: false}); // default is true
     
     try{
       await scrape(p.name, -1, browser) // set -1 to search all papers, or give a number to scrape a certain number of papers
           .then((insert_num) => {
             console.log("\n",insert_num,"have been inserted.");
-            
-            // fs.writeFile("./professor/"+professor+".json", JSON.stringify(paper_arr), function(err) {
-            //   if (err) console.log(err);
-            // });
-
-            // let sum = 0.0;
-            // paper_arr.forEach(e => {
-            //   sum += parseFloat(e.period);
-            // });
-            // console.log((sum/paper_arr.length).toFixed(2));
           })
           .catch((err) => {
             console.log(err);
@@ -395,9 +379,9 @@ let professors = db.prepare('SELECT * FROM professors').all();
 // Select some Ids to scrape
 const selectedIds = [
   19, 21, 24,
-  // ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203), // use spread operator to add numbers 203 to 242
-  // ...Array.from({ length: 356 - 327 + 1 }, (_, i) => i + 327), // use spread operator to add numbers 220 to 356
-  // ...Array.from({ length: 777 - 245 + 1 }, (_, i) => i + 245), // use spread operator to add numbers 245 to 777
+  ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203), // use spread operator to add numbers 203 to 242
+  ...Array.from({ length: 356 - 327 + 1 }, (_, i) => i + 327), // use spread operator to add numbers 220 to 356
+  ...Array.from({ length: 777 - 245 + 1 }, (_, i) => i + 245), // use spread operator to add numbers 245 to 777
 ].map(id => id - 1);
 let slice_profs = professors.filter((_, index) => selectedIds.includes(index));
 

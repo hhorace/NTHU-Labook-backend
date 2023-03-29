@@ -39,12 +39,7 @@ try {
 
   // update all professors' departments
   for(prof in prof_obj){
-    // console.log(prof, prof_obj[prof]);
-    // let query = db.prepare('SELECT * FROM professors WHERE name  = ?').get(prof);
-    // console.log(query);
     db.prepare('UPDATE professors SET departments = ? WHERE name = ?').run(prof_obj[prof].join(','), prof);
-    // query = db.prepare('SELECT * FROM professors WHERE name  = ?').get(prof);
-    // console.log(query);
   }
   
   let query = db.prepare('SELECT * FROM professors').all();
