@@ -1,0 +1,8 @@
+{
+  "dependencies": {
+    "better-sqlite3": "^8.1.0",
+    "js-yaml": "^4.1.0",
+    "puppeteer": "^19.6.3",
+    "sqlite3": "^5.1.4"
+  }
+}

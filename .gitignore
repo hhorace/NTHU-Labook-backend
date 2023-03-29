@@ -1,0 +1,4 @@
+*.txt
+node_modules
+*.db
+list.yml
