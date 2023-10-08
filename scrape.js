@@ -1,5 +1,6 @@
 const puppeteer = require('puppeteer');
 const fs = require('fs');
+const similarity = require('./similarity.js');
 
 function cal_period(date, student_id, degree){
   // ref: [清大100學年度起學生學號編碼原則](https://registra.site.nthu.edu.tw/var/file/211/1211/img/327248576.pdf)
@@ -126,8 +127,8 @@ async function scrape(professor, num_paper, browser) {
     let results = await page.$eval('#format0_disparea > tbody', tbody => [...tbody.rows].map(r => [...r.cells].map(c => c.innerText)));
     for(let j=0;j<results.length;j++){
       if (results[j][0] == '作者(中文):') name = results[j][1].replace(/\n/g, '');
-      else if (results[j][0] == '論文名稱(中文):') title_c = results[j][1];
-      else if (results[j][0] == '論文名稱(外文):') title_e = results[j][1];
+      else if (results[j][0] == '論文名稱(中文):') title_c = results[j][1].replace(/[\r\n\x0B\x0C\u0085\u2028\u2029]+/g,"");
+      else if (results[j][0] == '論文名稱(外文):') title_e = results[j][1].replace(/[\r\n\x0B\x0C\u0085\u2028\u2029]+/g,"");
       else if (results[j][0] == '學號:') student_id = results[j][1];
       else if (results[j][0] == '學位類別:') degree = results[j][1];
       else if (results[j][0] == '中文關鍵詞:') keyword_c = results[j][1];
@@ -181,9 +182,11 @@ async function scrape(professor, num_paper, browser) {
         console.log(`${name} have update professor_ids with adding new professor_id (${professor_id}).`);
       }
 
-      // goto next result
-      await page.click('#bodyid > form > div > table > tbody > tr:nth-child(1) > td.etds_mainct > table > tbody > tr:nth-child(6) > td > div.cont_l2 > table > tbody > tr:nth-child(2) > td > div > table > tbody > tr > td:nth-child(1) > table > tbody > tr > td:nth-child(4)');
-      continue;
+      if(query['link_tw']!='not found'){
+        // goto next result
+        await page.click('#bodyid > form > div > table > tbody > tr:nth-child(1) > td.etds_mainct > table > tbody > tr:nth-child(6) > td > div.cont_l2 > table > tbody > tr:nth-child(2) > td > div > table > tbody > tr > td:nth-child(1) > table > tbody > tr > td:nth-child(4)');
+        continue;
+      }
     }
 
     // 學號包含非數字
@@ -237,7 +240,7 @@ async function scrape(professor, num_paper, browser) {
         let selector = '#tablefmt1 > tbody > tr:nth-child('+ (j+2) +') > td.tdfmt1-content > div > div.leftdiv > table > tbody > tr:nth-child(2) > td > a > span';
         await page.waitForSelector(selector, { timeout: 60000 });
         let title_tmp = await page.$eval(selector, el => el.textContent);
-        if(title_tmp == title_c){
+        if(similarity(title_tmp,title_c)>=0.8 || similarity(title_tmp,title_e)>=0.8){ // 也檢查英文(因為有白癡中英文打反
           await page.click(selector);
           found = true;
           break;
@@ -268,7 +271,7 @@ async function scrape(professor, num_paper, browser) {
       results = await page.$eval('#format0_disparea > tbody', tbody => [...tbody.rows].map(r => [...r.cells].map(c => c.innerText)))
       for(let j=0;j<results.length;j++){
         if(results[j][0] == '論文名稱:'){
-          if (title_c == results[j][1]){
+          if (similarity(results[j][1], title_c)>=0.8 || similarity(results[j][1], title_c)>=0.8){ // 也檢查英文(因為有白癡中英文打反
             is_same_paper = true;
           }
         }
@@ -314,10 +317,20 @@ async function scrape(professor, num_paper, browser) {
       'note': note,
       'professor_id': professor_id.toString()
     }
-    console.log(paper);
-
-    db.prepare('INSERT INTO students VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
+    
+    if(query){
+      if(query['link_tw']=='not found'){
+        console.log("student_id(%s) new link_tw(%s), date(%s), period(%s)", student_id, link_tw, date, period);
+        db.prepare('UPDATE students SET link_tw = ?, date = ?, period = ? WHERE student_id = ?')
+        .run(link_tw, date, period, student_id);
+      }  
+    }
+    else{
+      console.log(paper);
+      db.prepare('INSERT INTO students VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)')
       .run(student_id, name, title_c, title_e, link_nthu, link_tw, date, graduate_year, keyword_c, keyword_e, period, note, professor_id.toString());
+    }
+    
     insert_num += 1;
     await page.waitForTimeout(60000); // sleep for 60 sec, 避免被鎖IP
 
@@ -376,18 +389,25 @@ db.pragma('journal_mode = WAL');
 let professors = db.prepare('SELECT * FROM professors').all();
 
 
-// Select some Ids to scrape
-const selectedIds = [
-  19, 21, 24,
-  ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203), // use spread operator to add numbers 203 to 242
-  ...Array.from({ length: 356 - 327 + 1 }, (_, i) => i + 327), // use spread operator to add numbers 220 to 356
-  ...Array.from({ length: 777 - 245 + 1 }, (_, i) => i + 245), // use spread operator to add numbers 245 to 777
-].map(id => id - 1);
-let slice_profs = professors.filter((_, index) => selectedIds.includes(index));
+// // Select some Ids to scrape
+// const selectedIds = [
+//   19, 21, 24,
+//   ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203), // use spread operator to add numbers 203 to 242
+//   ...Array.from({ length: 356 - 327 + 1 }, (_, i) => i + 327), // use spread operator to add numbers 220 to 356
+//   ...Array.from({ length: 777 - 245 + 1 }, (_, i) => i + 245), // use spread operator to add numbers 245 to 777
+// ].map(id => id - 1);
+// let slice_profs = professors.filter((_, index) => selectedIds.includes(index));
 
 
-// // Select ALL Ids to scrape
-// let slice_profs = professors.slice(0, professors.length);
+// Select ALL Ids to scrape
+// let slice_profs = professors.slice(777, professors.length);
+let slice_profs = professors.slice(83, 84);
+// let slice_profs = professors.slice(0, 100);
+
+// const selectedIds = [
+//   23, 25, 34, 38, 69, 84,
+// ].map(id => id - 1);
+// let slice_profs = professors.filter((_, index) => selectedIds.includes(index));
 
 console.log(slice_profs);
 scrape_all_professors(slice_profs);
