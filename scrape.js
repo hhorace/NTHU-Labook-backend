@@ -271,14 +271,16 @@ async function scrape(professor, num_paper, browser) {
       results = await page.$eval('#format0_disparea > tbody', tbody => [...tbody.rows].map(r => [...r.cells].map(c => c.innerText)))
       for(let j=0;j<results.length;j++){
         if(results[j][0] == '論文名稱:'){
-          if (similarity(results[j][1], title_c)>=0.8 || similarity(results[j][1], title_c)>=0.8){ // 也檢查英文(因為有白癡中英文打反
+          if (similarity(results[j][1], title_c)>=0.8 || similarity(results[j][1], title_e)>=0.8){ // 也檢查英文(因為有白癡中英文打反
             is_same_paper = true;
           }
         }
         else if (results[j][0] == '口試日期:'){
           // 日期接受格式：'yyyy-mm-dd', 'yyy-mm-dd', 'yyyymm-dd', 'yyyy-mmdd', 'yyyy-m-d', 'yyyy--mm--d--'等
           // 但無法接受 'yyymm-dd', e.g. '10804-07'
-          let date_arr = results[j][1].match(/^(\d{3,4})-?-?(\d{2}|\d)-?-?(\d{2}|\d)-?$/); 
+          let date_arr = results[j][1].replace(/[\r\n\x0B\x0C\u0085\u2028\u2029]+/g,"")
+                                      .replace(/\s/g, '')
+                                      .match(/^(\d{3,4})-?-?(\d{2}|\d)-?-?(\d{2}|\d)-?$/); 
           if(date_arr != null){
             let yyyy = (parseInt(date_arr[1]) < 1911) ? (parseInt(date_arr[1])+1911).toString() : date_arr[1];
             let mm = parseInt(date_arr[2]).toString().padStart(2, '0');
