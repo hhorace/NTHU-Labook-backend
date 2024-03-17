@@ -34,6 +34,8 @@ try {
   
   // insert all professors' name
   for(prof of Object.keys(prof_obj)){
+    let has_exit = db.prepare('SELECT * FROM professors WHERE name = ?').get(prof);
+    if(has_exit) continue;
     db.prepare('INSERT INTO professors (name) VALUES (?)').run(prof);
   }
 
