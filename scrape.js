@@ -83,7 +83,7 @@ async function scrape(professor, num_paper, browser) {
   const page = await browser.newPage();
 
   // goto 清大博碩士論文
-  await page.goto('https://etd.lib.nctu.edu.tw/cgi-bin/gs32/hugsweb.cgi?o=dnthucdr');
+  await page.goto('https://etd.lib.nycu.edu.tw/cgi-bin/gs32/hugsweb.cgi?o=dnthucdr');
 
   // key in professor's name
   await page.type('#ysearchinput0', professor);
@@ -393,7 +393,7 @@ let professors = db.prepare('SELECT * FROM professors').all();
 
 // // Select some Ids to scrape
 // const selectedIds = [
-//   19, 21, 24,
+//   2,50,357,
 //   ...Array.from({ length: 242 - 203 + 1 }, (_, i) => i + 203), // use spread operator to add numbers 203 to 242
 //   ...Array.from({ length: 356 - 327 + 1 }, (_, i) => i + 327), // use spread operator to add numbers 220 to 356
 //   ...Array.from({ length: 777 - 245 + 1 }, (_, i) => i + 245), // use spread operator to add numbers 245 to 777
@@ -403,8 +403,8 @@ let professors = db.prepare('SELECT * FROM professors').all();
 
 // Select ALL Ids to scrape
 // let slice_profs = professors.slice(777, professors.length);
-let slice_profs = professors.slice(83, 84);
 // let slice_profs = professors.slice(0, 100);
+let slice_profs = professors.slice(0, professors.length);
 
 // const selectedIds = [
 //   23, 25, 34, 38, 69, 84,
