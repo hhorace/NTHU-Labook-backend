@@ -123,7 +123,7 @@ async function scrape(professor, num_paper, browser) {
     // wait for table loading
     await page.waitForSelector('#format0_disparea > tbody', { timeout: 60000 });
     
-    let name = null, title_c = null, title_e = null, student_id = null, degree = null, keyword_c = null, keyword_e = null, graduate_year = null;
+    let name = null, title_c = null, title_e = null, student_id = null, degree = null, keyword_c = null, keyword_e = null, graduate_year = null, professor_names=null;
     let results = await page.$eval('#format0_disparea > tbody', tbody => [...tbody.rows].map(r => [...r.cells].map(c => c.innerText)));
     for(let j=0;j<results.length;j++){
       if (results[j][0] == '作者(中文):') name = results[j][1].replace(/\n/g, '');
@@ -134,7 +134,23 @@ async function scrape(professor, num_paper, browser) {
       else if (results[j][0] == '中文關鍵詞:') keyword_c = results[j][1];
       else if (results[j][0] == '外文關鍵詞:') keyword_e = results[j][1];
       else if (results[j][0] == '畢業學年度:') graduate_year = results[j][1];
+      else if (results[j][0] == '指導教授(中文):') professor_names = results[j][1].split(/\n/g);
     }
+    // check the same professor name to avoid that '王曉明' and '王曉' are same
+    let is_same_professor = false;
+    for(let professor_name of professor_names){
+      if(professor_name == professor){
+        is_same_professor = true;
+        break;
+      }
+    }
+    if(!is_same_professor){
+      console.log("not same professor: ", professor_names, professor);
+      // goto next result
+      await page.click('#bodyid > form > div > table > tbody > tr:nth-child(1) > td.etds_mainct > table > tbody > tr:nth-child(6) > td > div.cont_l2 > table > tbody > tr:nth-child(2) > td > div > table > tbody > tr > td:nth-child(1) > table > tbody > tr > td:nth-child(4)');
+      continue;
+    }
+
     if(name == null){
       console.log("作者(中文) not found: ", professor, i);
       name = 'not found';
